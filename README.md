@@ -23,7 +23,7 @@ Next, in `config/config.exs`, add:
 
 ```elixir
 config :super_seed, :setup, [
-  [repo_name: :my_repo, repo: SuperSeed.Repo, app: :super_seed, app_root_namespace: SuperSeed]
+  [repo: MyCoolApp.Repo, app: :my_cool_app, root_namespace: MyCoolApp]
 ]
 ```
 

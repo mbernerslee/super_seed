@@ -4,25 +4,39 @@ defmodule Mix.Tasks.SuperSeed.InitTest do
   import ExUnit.CaptureIO
 
   alias Mix.Tasks.SuperSeed.Init
-  alias SuperSeed.ApplicationRootNamespace
+  alias SuperSeed.Checks
 
   describe "run/1" do
+    @tag :capture_io
     test "creates the file structure" do
       Mimic.expect(File, :exists?, fn path ->
-        assert path == "lib/super_seed/setup.ex"
+        assert path == "lib/super_seed/my_test/setup.ex"
         false
       end)
 
-      Mimic.expect(File, :mkdir_p!, fn path -> assert path == "lib/super_seed" end)
-      Mimic.expect(File, :mkdir_p!, fn path -> assert path == "lib/super_seed/inserters" end)
-      Mimic.expect(ApplicationRootNamespace, :determine_from_mix_project, fn -> "CoolApp" end)
+      Mimic.expect(Checks, :application_get_env, fn _app, _key ->
+        [
+          [
+            repo: MyTest.Repo,
+            app: :my_test,
+            root_namespace: MyTest,
+            dir: "my_test"
+          ]
+        ]
+      end)
+
+      Mimic.expect(File, :mkdir_p!, fn path -> assert path == "lib/super_seed/my_test" end)
+
+      Mimic.expect(File, :mkdir_p!, fn path ->
+        assert path == "lib/super_seed/my_test/inserters"
+      end)
 
       Mimic.expect(File, :write!, fn path, contents ->
-        assert path == "lib/super_seed/setup.ex"
+        assert path == "lib/super_seed/my_test/setup.ex"
 
         assert contents ==
                  """
-                 defmodule CoolApp.SuperSeed.Setup do
+                 defmodule MyTest.SuperSeed.Setup do
                    @behaviour SuperSeed.Setup
 
                    @impl true
@@ -44,47 +58,47 @@ defmodule Mix.Tasks.SuperSeed.InitTest do
                  """
       end)
 
-      capture_io(fn -> Init.run() end)
+      capture_io(fn -> assert :ok == Init.run() end)
     end
 
-    test "creates the setup file namespaced under the app we're actually in" do
+    test "if the setup file already exists, and has stuff in it, don't attempt to recreate it" do
       Mimic.expect(File, :exists?, fn path ->
-        assert path == "lib/super_seed/setup.ex"
-        false
-      end)
-
-      Mimic.expect(File, :mkdir_p!, fn _path -> nil end)
-
-      Mimic.expect(File, :write!, fn path, contents ->
-        assert path == "lib/super_seed/setup.ex"
-        assert contents =~ "defmodule CoolApp.SuperSeed.Setup do"
-      end)
-
-      Mimic.expect(ApplicationRootNamespace, :determine_from_mix_project, fn -> "CoolApp" end)
-
-      Init.run()
-      # capture_io(fn -> Init.run() end)
-    end
-
-    test "exists if we can't figure out your app name my running Mix.Project.config() & prints an error on the screen" do
-      # Mimic.expect(ApplicationRootNamespace, :determine_from_mix_project, fn -> raise "error" end)
-
-      Mimic.reject(File, :exists?, 1)
-      Mimic.reject(File, :mkdir_p!, 1)
-      Mimic.reject(File, :write!, 2)
-
-      assert_raise RuntimeError, fn -> Init.run() end
-    end
-
-    test "if lib/super_seed/setup.ex already exists, and has stuff in it, don't attempt to recreate it" do
-      Mimic.expect(File, :exists?, fn path ->
-        assert path == "lib/super_seed/setup.ex"
+        assert path == "lib/super_seed/my_test/setup.ex"
         true
       end)
 
-      Mimic.expect(File, :mkdir_p!, fn path -> assert path == "lib/super_seed" end)
+      Mimic.expect(Checks, :application_get_env, fn _app, _key ->
+        [
+          [
+            repo: MyTest.Repo,
+            app: :my_test,
+            root_namespace: MyTest,
+            dir: "my_test"
+          ]
+        ]
+      end)
+
       Mimic.reject(File, :write!, 2)
       capture_io(fn -> Init.run() end)
+    end
+
+    test "if root_namespace isn't a proper module name, then raise" do
+      Mimic.expect(Checks, :application_get_env, fn _app, _key ->
+        [
+          [
+            repo: MyTest.Repo,
+            app: :my_test,
+            root_namespace: :nonsense,
+            dir: "my_test"
+          ]
+        ]
+      end)
+
+      Mimic.reject(File, :write!, 2)
+
+      msg = ~r|I expect :root_namespace to be a module name, but it isn't|
+
+      assert_raise RuntimeError, msg, fn -> Init.run() end
     end
   end
 end

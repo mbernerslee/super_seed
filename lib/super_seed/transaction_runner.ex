@@ -34,9 +34,10 @@ defmodule SuperSeed.TransactionRunner do
   end
 
   @impl true
-  def handle_continue({:run, results}, state) do
-    {:ok, result} =
-      Repo.transaction(fn -> state.inserter_module.insert(results) end, timeout: state.timeout)
+  def handle_continue({:run, _results}, state) do
+    # {:ok, result} =
+    #  Repo.transaction(fn -> state.inserter_module.insert(results) end, timeout: state.timeout)
+    result = "cool"
 
     state = Map.put(state, :result, result)
     {:stop, :normal, state}

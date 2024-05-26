@@ -88,5 +88,13 @@
     "dependsOn": [
       "mix compile --force --warnings-as-errors"
     ]
+  },
+  {
+    "buildStepName": "mix super_seed.init e2e test",
+    "command": "mix_super_seed_init_e2e_test",
+    "commandType": "script",
+    "dependsOn": [
+      "mix compile --force --warnings-as-errors"
+    ]
   }
 ]

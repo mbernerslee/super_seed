@@ -1,21 +1,47 @@
 defmodule Mix.Tasks.SuperSeed.Init do
   use Mix.Task
   require Mix.Generator
-  alias SuperSeed.{ApplicationRootNamespace, ConfigReader}
+  alias SuperSeed.ConfigReader
 
   def run(_args \\ []) do
-    ConfigReader.read()
-    |> IO.inspect()
+    %{dir: dir, app: _app, repo: _repo, root_namespace: root_namespace} = ConfigReader.read()
+    root_namespace = parse_root_namespace(root_namespace)
 
-    app_module = ApplicationRootNamespace.determine_from_mix_project()
-    Mix.Generator.create_directory("lib/super_seed")
-    Mix.Generator.create_directory("lib/super_seed/inserters")
+    root_dir = "lib/super_seed/#{dir}"
+    Mix.Generator.create_directory(root_dir)
+    Mix.Generator.create_directory("#{root_dir}/inserters")
 
-    if File.exists?("lib/super_seed/setup.ex") do
-      log(:yellow, :already_exists, "lib/super_seed/setup.ex")
+    setup_file_path = "#{root_dir}/setup.ex"
+
+    if File.exists?(setup_file_path) do
+      log(:yellow, :already_exists, setup_file_path)
     else
-      log(:green, :creating, "lib/super_seed/setup.ex")
-      File.write!("lib/super_seed/setup.ex", setup_file_contents(app_module))
+      log(:green, :creating, setup_file_path)
+      File.write!(setup_file_path, setup_file_contents(root_namespace))
+    end
+
+    :ok
+  end
+
+  defp parse_root_namespace(root_namespace) do
+    root_namespace
+    |> to_string()
+    |> String.split("Elixir.")
+    |> case do
+      ["", module] ->
+        module
+
+      error ->
+        raise """
+        I expect :root_namespace to be a module name, but it isn't.
+        I got #{error}, so I'm giving up!
+
+        Check the config and make sure the :root_namespace value is a real module name.
+
+        config :super_seed, :setup, [
+          [repo: SuperSeed.ExampleRepo, app: :super_seed, root_namespace: SuperSeed, dir: "super_seed"]
+        ]
+        """
     end
   end
 

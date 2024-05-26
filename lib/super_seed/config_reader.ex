@@ -1,8 +1,9 @@
 defmodule SuperSeed.ConfigReader do
   alias SuperSeed.Checks
 
-  @setup_keys [:repo_name, :repo, :app, :app_root_namespace]
+  @setup_keys [:repo, :app, :root_namespace, :dir]
 
+  # TODO parse root_namespace, make sure its a real module?
   def read do
     :super_seed
     |> Checks.application_get_env(:setup)

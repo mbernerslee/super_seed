@@ -1,0 +1,12 @@
+#!/bin/bash
+
+cd e2e_test/example_project
+rm -rf lib/super_seed
+
+mix super_seed.init
+exit_code=$?
+
+rm -rf lib/super_seed
+exit $exit_code
+
+#TODO finish writing this test
