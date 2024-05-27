@@ -1,5 +1,6 @@
 defmodule SuperSeedTest do
   use ExUnit.Case, async: false
+  alias SuperSeed.Checks
   # use Mimic
   # import ExUnit.CaptureLog
   # alias SuperSeed.{InsertersNamespaceFinder, Mocks, SetupModuleFinder, TestSetups}
@@ -42,4 +43,22 @@ defmodule SuperSeedTest do
   #    assert logging =~ DogWalking.output_when_run()
   #  end
   # end
+
+  describe "run/1" do
+    test "x" do
+      Mimic.expect(Checks, :application_get_env, fn _app, _key ->
+        [
+          [
+            repo: MyTest.Repo,
+            app: :my_test,
+            root_namespace: MyTest,
+            name: "my_test"
+          ]
+        ]
+      end)
+
+      SuperSeed.run()
+      |> IO.inspect()
+    end
+  end
 end

@@ -1,9 +1,10 @@
 defmodule SuperSeed do
   require Logger
+  alias SuperSeed.ConfigReader
   # alias SuperSeed.{SetupModuleFinder, InsertersNamespaceFinder, InserterModules, Server}
 
-  def run do
-    Application.get_env(:super_seed, :setup)
+  def run(args \\ []) do
+    ConfigReader.read(args)
     |> IO.inspect()
 
     # raise "no"
