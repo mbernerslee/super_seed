@@ -3,11 +3,13 @@ defmodule Mix.Tasks.SuperSeed.Init do
   require Mix.Generator
   alias SuperSeed.ConfigReader
 
-  def run(_args \\ []) do
-    %{dir: dir, app: _app, repo: _repo, root_namespace: root_namespace} = ConfigReader.read()
+  def run(args \\ []) do
+    %{name: name, app: _app, repo: _repo, root_namespace: root_namespace} =
+      ConfigReader.read(args)
+
     root_namespace = parse_root_namespace(root_namespace)
 
-    root_dir = "lib/super_seed/#{dir}"
+    root_dir = "lib/super_seed/#{name}"
     Mix.Generator.create_directory(root_dir)
     Mix.Generator.create_directory("#{root_dir}/inserters")
 
@@ -39,7 +41,7 @@ defmodule Mix.Tasks.SuperSeed.Init do
         Check the config and make sure the :root_namespace value is a real module name.
 
         config :super_seed, :setup, [
-          [repo: SuperSeed.ExampleRepo, app: :super_seed, root_namespace: SuperSeed, dir: "super_seed"]
+          [name: "my_app", repo: MyApp.ExampleRepo, app: :my_app, root_namespace: MyApp]
         ]
         """
     end

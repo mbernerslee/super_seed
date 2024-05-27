@@ -6,7 +6,7 @@ defmodule SuperSeed do
     Application.get_env(:super_seed, :setup)
     |> IO.inspect()
 
-    raise "no"
+    # raise "no"
 
     # %{inserters_namespace: inserters_namespace, setup_module: setup_module} = setup()
     # setup_result = setup_module.setup()

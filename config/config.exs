@@ -1,7 +1,7 @@
 import Config
 
 config :super_seed, :setup, [
-  [repo: SuperSeed.ExampleRepo, app: :super_seed, root_namespace: SuperSeed, dir: "super_seed"]
+  [name: "super_seed", repo: SuperSeed.ExampleRepo, app: :super_seed, root_namespace: SuperSeed]
 ]
 
 # Import environment specific config. This must remain at the bottom

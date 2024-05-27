@@ -1,7 +1,7 @@
 import Config
 
 config :super_seed, :setup, [
-  [repo: ExampleProject.Repo, app: :example_project, root_namespace: ExampleProject, dir: "example_project"]
+  [repo: ExampleProject.Repo, app: :example_project, root_namespace: ExampleProject, name: "example_project"]
 ]
 
 # Import environment specific config. This must remain at the bottom

@@ -2,9 +2,7 @@ defmodule SuperSeed.InserterModules do
   alias SuperSeed.Checks
 
   def find(namespace) do
-    namespace =
-      to_string(namespace)
-      |> IO.inspect()
+    namespace = to_string(namespace)
 
     Checks.code_all_loaded()
     # |> Enum.filter(fn {module, _} ->
