@@ -18,3 +18,5 @@ config :super_seed,
   inserters: %{
     farms: %{namespace: SuperSeed.Support.Inserters, repo: SuperSeed.Repo, app: :super_seed}
   }
+
+config :super_seed, side_effects_wrapper_module: SuperSeed.SideEffectsWrapper.Fake
