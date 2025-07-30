@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+
+set -e
+
+RESET="\033[0m"
+GREEN="\033[38;2;166;218;149m"
+TEAL="\033[38;2;139;213;202m"
+RED="\033[38;2;237;135;150m"
+
+INFO_COLOUR=$TEAL
+SUCCESS_COLOUR=$GREEN
+FAILURE_COLOUR=$RED
+
+echo_success() {
+  echo -e "${SUCCESS_COLOUR}$@${RESET}"
+}
+
+echo_info() {
+  echo -e "${INFO_COLOUR}$@${RESET}"
+}
+
+echo_failure() {
+  echo -e "${FAILURE_COLOUR}$@${RESET}"
+}
+
+calculate_duration() {
+  local start_time="$1"
+  local end_time="$2"
+
+  duration=$(echo "$end_time - $start_time" | bc)
+
+  # Pretty format the duration
+  if (( $(echo "$duration >= 60" | bc -l) )); then
+    # More than 1 minute
+    minutes=$(echo "$duration / 60" | bc)
+    seconds=$(echo "$duration % 60" | bc)
+    duration_str="${minutes}m${seconds}s"
+  elif (( $(echo "$duration >= 1" | bc -l) )); then
+    # More than 1 second
+    duration_str=$(printf "%.1fs" "$duration")
+  else
+    # Less than 1 second
+    milliseconds=$(echo "$duration * 1000" | bc)
+    duration_str=$(printf "%.0fms" "$milliseconds")
+  fi
+
+  echo "$duration_str"
+}
+
+run_and_log() {
+  echo_info "$(printf '%.0s─' {1..60})"
+  echo_info "$@"
+  echo_info "$(printf '%.0s─' {1..60})"
+
+  start_time=$(date +%s.%N)
+  eval "$@"
+  result=$?
+  end_time=$(date +%s.%N)
+
+  duration_str=$(calculate_duration "$start_time" "$end_time")
+
+  if [[ $result -eq 0 ]]; then
+    echo_success "✓ completed in ${duration_str}"
+  else
+    echo_failure "✗ failed after ${duration_str}"
+  fi
+
+  return $result
+}
+
+TOTAL_START_TIME=$(date +%s.%N)
+
+run_and_log "mix deps.get"
+run_and_log "mix clean"
+run_and_log "mix compile --warnings-as-errors"
+run_and_log "mix test"
+run_and_log "mix format --check-formatted"
+run_and_log "mix credo --strict"
+
+TOTAL_END_TIME=$(date +%s.%N)
+TOTAL_DURATION=$(calculate_duration "$TOTAL_START_TIME" "$TOTAL_END_TIME")
+
+echo_success "$(printf '%.0s═' {1..60})"
+echo_success "✅ Build completed successfully in ${TOTAL_DURATION}"
+echo_success "$(printf '%.0s═' {1..60})"
