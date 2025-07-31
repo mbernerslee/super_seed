@@ -1,33 +1,24 @@
 defmodule SuperSeed do
   require Logger
-  alias SuperSeed.SideEffectsWrapper
+  alias SuperSeed.{Init, InserterModulesValidator}
 
   def run(name) do
-    with {:ok, %{namespace: namespace, repo: repo, app: app}} <- fetch_config(name),
-         {:ok, modules} <- SideEffectsWrapper.application_get_key(app, :modules),
-         {:ok, modules} <- filter_inserter_modules_by_namespace(modules, namespace) do
-      {:ok, modules}
-    end
-  end
+    with {:ok, %{repo: repo, modules: modules}} <- Init.run(name),
+         :ok <- InserterModulesValidator.validate(modules) do
+      :ok
+    else
+      # TODO test & action these errors properly
+      {:error, {:init, :inserter_modules_not_found}} ->
+        nil
 
-  defp filter_inserter_modules_by_namespace(modules, namespace) do
-    modules
-    |> Enum.filter(fn module ->
-      String.starts_with?(to_string(module), "#{namespace}.")
-    end)
-    |> IO.inspect()
-  end
+      {:error, {:init, :config_in_wrong_format}} ->
+        nil
 
-  defp fetch_config(name) do
-    :super_seed
-    |> SideEffectsWrapper.application_get_env(:inserters, %{})
-    |> Map.get(name)
-    |> case do
-      %{namespace: namespace, repo: repo, app: app} ->
-        {:ok, %{namespace: to_string(namespace), repo: repo, app: app}}
+      {:error, {:init, :missing_config}} ->
+        nil
 
-      _ ->
-        {:error, :bad_config}
+      {:error, {:inserter_module_validation, module, :malformed}} ->
+        nil
     end
   end
 end

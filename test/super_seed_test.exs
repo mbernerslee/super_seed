@@ -12,6 +12,8 @@ defmodule SuperSeedTest do
   alias SuperSeed.Support.Schemas.Farm
 
   setup_all do
+    original = Application.get_env(:super_seed, :side_effects_wrapper_module)
+
     Application.put_env(
       :super_seed,
       :side_effects_wrapper_module,
@@ -22,7 +24,7 @@ defmodule SuperSeedTest do
       Application.put_env(
         :super_seed,
         :side_effects_wrapper_module,
-        SuperSeed.SideEffectsWrapper.Fake
+        original
       )
     end)
   end
@@ -34,16 +36,6 @@ defmodule SuperSeedTest do
       SuperSeed.run(:farms)
 
       name = Farms.name()
-
-      # Mimic.expect(SideEffectsWrapper, :application_get_env, 1, fn :super_seed, :inserters, %{} ->
-      #  %{
-      #    farms: %{namespace: SuperSeed.Support.Inserters, repo: SuperSeed.Repo, app: :super_seed}
-      #  }
-      # end)
-
-      # Mimic.expect(SideEffectsWrapper, :application_get_key, 1, fn :super_seed, :modules ->
-      #  []
-      # end)
 
       assert [%Farm{name: ^name}] = Repo.all(Farm)
     end
