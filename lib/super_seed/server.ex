@@ -1,5 +1,6 @@
 defmodule SuperSeed.Server do
   use GenServer
+  alias SuperSeed.WhichInsertersCanRun
 
   def run(repo, inserters) do
     {:ok, _server_pid} =
@@ -15,6 +16,9 @@ defmodule SuperSeed.Server do
   def init(%{repo: repo, inserters: inserters, caller_pid: caller_pid}) do
     dependencies = build_dependencies(inserters)
     statuses = Map.new(inserters, fn inserter -> {inserter, :pending} end)
+
+    WhichInsertersCanRun.determine(dependencies, statuses)
+    |> IO.inspect()
 
     {:ok, %{repo: repo, statuses: statuses, finished: %{}, caller_pid: caller_pid},
      {:continue, :start}}
