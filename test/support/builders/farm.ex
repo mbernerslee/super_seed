@@ -4,6 +4,7 @@ defmodule SuperSeed.Support.Builders.Farm do
   alias SuperSeed.Repo
   alias SuperSeed.Support.Schemas.Farm
 
+  @impl true
   def build do
     %Farm{
       name: Faker.Company.name(),
@@ -16,18 +17,21 @@ defmodule SuperSeed.Support.Builders.Farm do
     }
   end
 
+  @impl true
   def insert!(farm) do
     Repo.insert!(farm)
   end
 
+  @impl true
   def insert!, do: insert!(build())
 
   def with_name(farm, name), do: %{farm | name: name}
   def with_location(farm, location), do: %{farm | location: location}
   def with_acreage(farm, acreage), do: %{farm | acreage: acreage}
 
-  def with_established_date(farm, established_date),
-    do: %{farm | established_date: established_date}
+  def with_established_date(farm, established_date) do
+    %{farm | established_date: established_date}
+  end
 
   def with_owner_name(farm, owner_name), do: %{farm | owner_name: owner_name}
   def with_phone(farm, phone), do: %{farm | phone: phone}

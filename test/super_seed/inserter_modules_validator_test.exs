@@ -2,8 +2,7 @@ defmodule SuperSeed.InserterModulesValidatorTest do
   use ExUnit.Case, async: true
   alias SuperSeed.InserterModulesValidator
 
-  alias SuperSeed.Support.Inserters.{
-    Farms,
+  alias SuperSeed.Support.Inserters.ValidationExamples.{
     MinimumValid,
     Empty,
     MissingDependsOn,
@@ -12,6 +11,8 @@ defmodule SuperSeed.InserterModulesValidatorTest do
     WrongArityDependsOn,
     WrongArityInsert
   }
+
+  alias SuperSeed.Support.Inserters.Farms.Farms
 
   describe "validate/1" do
     test "given a module which contains the mandatory inserter module functions, return ok" do

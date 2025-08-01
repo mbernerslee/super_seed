@@ -7,8 +7,7 @@ defmodule SuperSeedTest do
   use SuperSeed.Support.DataCase, async: false
   # use Mimic
   alias SuperSeed.Repo
-  alias SuperSeed.SideEffectsWrapper
-  alias SuperSeed.Support.Inserters.Farms
+  alias SuperSeed.Support.Inserters.Farming.Farms.SunriseValley
   alias SuperSeed.Support.Schemas.Farm
 
   setup_all do
@@ -35,7 +34,7 @@ defmodule SuperSeedTest do
 
       SuperSeed.run(:farms)
 
-      name = Farms.name()
+      name = SunriseValley.name()
 
       assert [%Farm{name: ^name}] = Repo.all(Farm)
     end

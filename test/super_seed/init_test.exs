@@ -27,7 +27,7 @@ defmodule SuperSeed.InitTest do
 
       assert {:ok,
               %{
-                modules: [ExampleNamespace.FakeModule, ExampleNamespace.OtherFakeModule],
+                inserters: [ExampleNamespace.FakeModule, ExampleNamespace.OtherFakeModule],
                 repo: ExampleNamespace.Repo
               }} ==
                Init.run(:example_name)

@@ -10,8 +10,8 @@ defmodule SuperSeed.Init do
   def run(name) do
     with {:ok, %{namespace: namespace, repo: repo, app: app}} <- fetch_config(name),
          {:ok, modules} <- get_app_modules(app, namespace) do
-      filtered_modules = filter_inserter_modules_by_namespace(modules, namespace)
-      {:ok, %{modules: filtered_modules, repo: repo}}
+      inserters = filter_inserter_modules_by_namespace(modules, namespace)
+      {:ok, %{inserters: inserters, repo: repo}}
     end
   end
 
@@ -21,7 +21,7 @@ defmodule SuperSeed.Init do
     end)
   end
 
-  defp get_app_modules(app, namespace) do
+  defp get_app_modules(app, _namespace) do
     case SideEffectsWrapper.application_get_key(app, :modules) do
       {:ok, modules} ->
         {:ok, modules}
