@@ -1,23 +1,23 @@
 defmodule SuperSeed.WhichInsertersCanRun do
-  def determine(deps, statuses) do
-    statuses
+  def determine(deps, workers) do
+    workers
     |> Enum.reduce([], fn
-      {inserter, :pending}, acc ->
-        if deps_finished?(inserter, deps, statuses) do
+      {inserter, %{status: :pending}}, acc ->
+        if deps_finished?(inserter, deps, workers) do
           [inserter | acc]
         else
           acc
         end
 
-      {inserter, _}, acc ->
+      _, acc ->
         acc
     end)
     |> MapSet.new()
   end
 
-  defp deps_finished?(inserter, deps, statuses) do
+  defp deps_finished?(inserter, deps, workers) do
     deps
     |> Map.fetch!(inserter)
-    |> Enum.all?(fn dep -> Map.fetch!(statuses, dep) == :finished end)
+    |> Enum.all?(fn dep -> workers[dep][:status] == :finished end)
   end
 end

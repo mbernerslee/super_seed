@@ -12,12 +12,12 @@ defmodule SuperSeed.InserterModulesValidatorTest do
     WrongArityInsert
   }
 
-  alias SuperSeed.Support.Inserters.Farms.Farms
+  alias SuperSeed.Support.Inserters.Farming.Farms.SunriseValley
 
   describe "validate/1" do
     test "given a module which contains the mandatory inserter module functions, return ok" do
       assert :ok == InserterModulesValidator.validate([MinimumValid])
-      assert :ok == InserterModulesValidator.validate([MinimumValid, Farms])
+      assert :ok == InserterModulesValidator.validate([MinimumValid, SunriseValley])
     end
 
     test "malformed inserter module error cases" do

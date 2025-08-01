@@ -1,31 +1,62 @@
 defmodule SuperSeed.Server do
   use GenServer
+  alias SuperSeed.InserterWorker
   alias SuperSeed.WhichInsertersCanRun
 
   def run(repo, inserters) do
     {:ok, _server_pid} =
       GenServer.start_link(__MODULE__, %{repo: repo, inserters: inserters, caller_pid: self()})
 
-    # repo.transaction(fn ->
-    #  Enum.each(inserters, fn inserter -> inserter.insert(:ok) end)
-    # end)
-
     send(self(), :server_done)
   end
 
   def init(%{repo: repo, inserters: inserters, caller_pid: caller_pid}) do
-    dependencies = build_dependencies(inserters)
-    statuses = Map.new(inserters, fn inserter -> {inserter, :pending} end)
+    deps = build_dependencies(inserters)
 
-    WhichInsertersCanRun.determine(dependencies, statuses)
-    |> IO.inspect()
+    workers =
+      Map.new(inserters, fn inserter ->
+        {:ok, worker_pid} = InserterWorker.start_link(inserter, repo, self())
+        {inserter, %{status: :pending, pid: worker_pid}}
+      end)
 
-    {:ok, %{repo: repo, statuses: statuses, finished: %{}, caller_pid: caller_pid},
+    {:ok, %{repo: repo, workers: workers, deps: deps, results: %{}, caller_pid: caller_pid},
      {:continue, :start}}
   end
 
   def handle_continue(:start, state) do
-    {:noreply, state}
+    {:noreply, start_workers_which_can_run(state)}
+  end
+
+  def handle_call({:worker_finished, inserter, {:ok, result}}, _from, state) do
+    %{workers: workers, caller_pid: caller_pid} = state
+
+    state =
+      state
+      |> put_in([:workers, inserter, :status], :finished)
+      |> put_in([:results, inserter], result)
+
+    # if Enum.all?(workers, &(&1.status == :finished)) do
+    if Enum.all?(workers, fn {_, %{status: status}} -> status == :finished end) do
+      send(caller_pid, :server_done)
+      {:stop, :normal, state}
+    else
+      {:reply, :ok, start_workers_which_can_run(state)}
+    end
+  end
+
+  defp start_workers_which_can_run(state) do
+    %{deps: deps, workers: workers, results: results} = state
+
+    deps
+    |> WhichInsertersCanRun.determine(workers)
+    |> Enum.reduce(state, fn inserter, state ->
+      worker = state[:workers][inserter]
+      worker = Map.replace!(worker, :status, :running)
+
+      GenServer.cast(worker.pid, {:run_requested, results})
+
+      put_in(state, [:workers, inserter], worker)
+    end)
   end
 
   defp build_dependencies(inserters) do
@@ -33,7 +64,7 @@ defmodule SuperSeed.Server do
       Enum.map(inserters, fn inserter -> {inserter, inserter.table(), inserter.depends_on()} end)
 
     tables =
-      Enum.reduce(expended, %{}, fn {inserter, table, depends_on}, acc ->
+      Enum.reduce(expended, %{}, fn {inserter, table, _depends_on}, acc ->
         Map.update(acc, table, [inserter], &[inserter | &1])
       end)
 

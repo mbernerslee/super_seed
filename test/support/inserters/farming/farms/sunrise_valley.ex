@@ -5,8 +5,6 @@ defmodule SuperSeed.Support.Inserters.Farming.Farms.SunriseValley do
 
   @name "Sunrise Valley"
 
-  def name, do: @name
-
   @impl true
   def table, do: "farms"
 
