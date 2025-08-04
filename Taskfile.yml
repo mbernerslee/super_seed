@@ -1,0 +1,71 @@
+version: '3'
+
+output: group
+output-group-error-only: true
+run: once
+
+tasks:
+  build:
+    desc: "Run full build pipeline"
+    deps:
+      - mix_deps_get
+      - mix_compile_test
+      - mix_ecto_clean_test
+      - mix_test
+      - mix_format_test
+      - mix_credo_test
+      - e2e_test
+
+  mix_deps_get:
+    desc: "Get dependencies"
+    cmds:
+      - mix deps.get
+    deps: []
+
+  mix_compile_test:
+    desc: "Compile with warnings as errors"
+    env:
+      MIX_ENV: test
+    cmds:
+      - mix compile --warnings-as-errors --force
+    deps: [mix_deps_get]
+
+  mix_ecto_clean_test:
+    desc: "Clean build artifacts"
+    env:
+      MIX_ENV: test
+    cmds:
+      - mix ecto.clean
+    deps: [mix_compile_test]
+
+  mix_format_test:
+    desc: "Check code formatting"
+    env:
+      MIX_ENV: test
+    cmds:
+      - mix format --check-formatted
+    deps: [mix_compile_test]
+
+  mix_test:
+    desc: "Run unit tests"
+    cmds:
+      - mix test
+    deps: [mix_ecto_clean_test]
+
+  # Struggles to run in parrellel with mix test for some reason
+  mix_credo_test:
+    desc: "Run credo linter"
+    env:
+      MIX_ENV: test
+    cmds:
+      - mix credo --strict
+
+
+    deps: [mix_test]
+
+  e2e_test:
+    desc: "Run E2E tests"
+    cmds:
+      - scripts/e2e_test.sh
+    deps: [mix_test]
+

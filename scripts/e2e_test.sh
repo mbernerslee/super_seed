@@ -7,14 +7,13 @@ my_dir="$(dirname "$0")"
 source "$my_dir/pretty_wrapper_functions.sh"
 
 # Start the application and run a command
-export MIX_ENV=e2e_test
-export PGDATABASE=super_seed_e2e_test
+export MIX_ENV=test
+export PGDATABASE=super_seed_test
 
-run_and_log "mix deps.get"
-run_and_log "mix compile"
-run_and_log "mix ecto.clean"
+# expects migrations to be up to date prior to running
 
-run_and_log "mix run -e \":ok = SuperSeed.run(:farms)\""
+mix ecto.trunc
+run_and_log "mix run -e \"Application.put_env(:super_seed, :side_effects_wrapper_module, SuperSeed.SideEffectsWrapper.Real); :ok = SuperSeed.run(:farms)\""
 
 set +e
 
@@ -34,6 +33,9 @@ assert() {
 
 run_and_log "assert \"SELECT name FROM farms;\" \"Sunrise Valley\""
 run_and_log "assert \"SELECT COUNT(*) FROM animals;\" \"4\""
+
+set -e
+mix ecto.trunc
 
 TOTAL_END_TIME=$(date +%s.%N)
 TOTAL_DURATION=$(calculate_duration "$TOTAL_START_TIME" "$TOTAL_END_TIME")

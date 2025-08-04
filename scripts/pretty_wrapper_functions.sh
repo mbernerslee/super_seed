@@ -64,16 +64,17 @@ run_and_log() {
 
   start_time=$(date +%s.%N)
   eval "$@"
-  result=$?
+  exit_code=$?
   end_time=$(date +%s.%N)
 
   duration_str=$(calculate_duration "$start_time" "$end_time")
 
-  if [[ $result -eq 0 ]]; then
+  if [[ $exit_code -eq 0 ]]; then
     echo_success "✓ completed in ${duration_str}"
   else
-    echo_failure "✗ failed after ${duration_str}"
+    echo_failure "✗ failed with exit code $exit_code after ${duration_str}"
+    exit $exit_code
   fi
 
-  return $result
+  return $exit_code
 }
