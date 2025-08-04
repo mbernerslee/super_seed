@@ -8,12 +8,25 @@ source "$my_dir/scripts/pretty_wrapper_functions.sh"
 
 TOTAL_START_TIME=$(date +%s.%N)
 
+# Run the e2e tests async to everything else
+./scripts/e2e_test.sh &
+e2e_test_pid=$!
+
 run_and_log "mix deps.get"
 run_and_log "mix clean"
-run_and_log "mix compile --warnings-as-errors"
+run_and_log "MIX_ENV=test mix compile --warnings-as-errors --force"
 run_and_log "mix test"
 run_and_log "mix format --check-formatted"
 run_and_log "mix credo --strict"
+
+# Wait for the e2e tests to finish
+wait $e2e_test_pid
+e2e_exit_code=$?
+if [[ $e2e_exit_code -ne 0 ]]; then
+  echo_failure "E2E tests failed"
+  exit $e2e_exit_code
+fi
+
 
 TOTAL_END_TIME=$(date +%s.%N)
 TOTAL_DURATION=$(calculate_duration "$TOTAL_START_TIME" "$TOTAL_END_TIME")
