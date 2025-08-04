@@ -7,10 +7,10 @@ defmodule SuperSeed.Support.Builders.FeedingSchedule do
   @impl true
   def build do
     start_date = Faker.Date.between(~D[2024-01-01], ~D[2024-06-30])
-    
+
     %FeedingSchedule{
       quantity_kg: Decimal.new(:rand.uniform(20) + 1),
-      feeding_time: Time.new!(:rand.uniform(24), :rand.uniform(60), 0),
+      feeding_time: Time.new!(:rand.uniform(24) - 1, :rand.uniform(60) - 1, 0),
       frequency_per_day: :rand.uniform(4) + 1,
       start_date: start_date,
       end_date: Date.add(start_date, :rand.uniform(180) + 30),

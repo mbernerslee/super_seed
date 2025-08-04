@@ -62,9 +62,9 @@ defmodule SuperSeedTest do
                "Premium Hay"
              ]
 
-      assert Repo.all(
-               from f in "feeding_schedules", order_by: f.quantity_kg, select: f.quantity_kg
-             ) == [Decimal.new("5.00")]
+      assert Repo.all(from f in "feeding_schedules", order_by: f.quantity_kg, select: f.quantity_kg) == [
+               Decimal.new("5.00")
+             ]
 
       assert Repo.all(from h in "health_records", order_by: h.record_type, select: h.record_type) ==
                ["checkup", "injury", "treatment", "vaccination"]

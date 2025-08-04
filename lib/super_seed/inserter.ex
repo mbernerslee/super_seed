@@ -1,7 +1,7 @@
 defmodule SuperSeed.Inserter do
   @moduledoc """
   Behaviour for inserter modules that define how to insert test data.
-  
+
   Each inserter must implement:
   - table/0: Returns the database table name as a string
   - depends_on/0: Returns a list of dependencies as {:table, "name"} or {:inserter, Module}
@@ -20,8 +20,8 @@ defmodule SuperSeed.Inserter do
   - {:inserter, ModuleName} for specific inserter dependencies
   """
   @callback depends_on() :: [
-    {:table, String.t()} | {:inserter, module()}
-  ]
+              {:table, String.t()} | {:inserter, module()}
+            ]
 
   @doc """
   Inserts a record using the provided dependency map.

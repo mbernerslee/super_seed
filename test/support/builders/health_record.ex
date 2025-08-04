@@ -7,7 +7,7 @@ defmodule SuperSeed.Support.Builders.HealthRecord do
   @impl true
   def build do
     record_date = Faker.Date.between(~D[2023-01-01], ~D[2024-12-31])
-    
+
     %HealthRecord{
       record_date: record_date,
       record_type: Enum.random(["checkup", "vaccination", "treatment", "surgery", "injury"]),

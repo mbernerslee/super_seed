@@ -7,7 +7,7 @@ defmodule SuperSeed.Support.Builders.FeedInventory do
   @impl true
   def build do
     purchase_date = Faker.Date.between(~D[2024-01-01], ~D[2024-06-30])
-    
+
     %FeedInventory{
       quantity_kg: Decimal.new(:rand.uniform(1000) + 100),
       purchase_date: purchase_date,

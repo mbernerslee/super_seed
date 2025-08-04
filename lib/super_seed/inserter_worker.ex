@@ -23,7 +23,7 @@ defmodule SuperSeed.InserterWorker do
 
     Logger.debug("#{inspect(state.inserter)} finished!")
 
-    :ok = GenServer.call(server_pid, {:worker_finished, inserter, result})
+    :ok = GenServer.cast(server_pid, {:worker_finished, inserter, result})
 
     {:stop, :normal, %{state | status: :finished}}
   end

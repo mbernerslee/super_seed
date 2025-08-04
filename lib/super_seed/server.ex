@@ -1,4 +1,5 @@
 defmodule SuperSeed.Server do
+  require Logger
   use GenServer
   alias SuperSeed.InserterWorker
   alias SuperSeed.WhichInsertersCanRun
@@ -6,8 +7,6 @@ defmodule SuperSeed.Server do
   def run(repo, inserters) do
     {:ok, _server_pid} =
       GenServer.start_link(__MODULE__, %{repo: repo, inserters: inserters, caller_pid: self()})
-
-    send(self(), :server_done)
   end
 
   def init(%{repo: repo, inserters: inserters, caller_pid: caller_pid}) do
@@ -19,28 +18,26 @@ defmodule SuperSeed.Server do
         {inserter, %{status: :pending, pid: worker_pid}}
       end)
 
-    {:ok, %{repo: repo, workers: workers, deps: deps, results: %{}, caller_pid: caller_pid},
-     {:continue, :start}}
+    {:ok, %{repo: repo, workers: workers, deps: deps, results: %{}, caller_pid: caller_pid}, {:continue, :start}}
   end
 
   def handle_continue(:start, state) do
     {:noreply, start_workers_which_can_run(state)}
   end
 
-  def handle_call({:worker_finished, inserter, {:ok, result}}, _from, state) do
-    %{workers: workers, caller_pid: caller_pid} = state
-
+  def handle_cast({:worker_finished, inserter, {:ok, result}}, state) do
     state =
       state
       |> put_in([:workers, inserter, :status], :finished)
       |> put_in([:results, inserter], result)
 
-    # if Enum.all?(workers, &(&1.status == :finished)) do
-    if Enum.all?(workers, fn {_, %{status: status}} -> status == :finished end) do
-      send(caller_pid, :server_done)
+    # TODO BUG was here!!! never fininshed because only checking status BEFORE we update dthe last one. write a test to catch this
+    if Enum.all?(state.workers, fn {_, %{status: status}} -> status == :finished end) do
+      Logger.debug("Server - DONE!")
+      send(state.caller_pid, :server_done)
       {:stop, :normal, state}
     else
-      {:reply, :ok, start_workers_which_can_run(state)}
+      {:noreply, start_workers_which_can_run(state)}
     end
   end
 
