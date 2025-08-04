@@ -21,10 +21,10 @@
             # Unix tools your script needs
             bash
             bc
-            python3
             inotify-tools
 
             go-task
+            yamllint
           ];
 
           #shellHook = ''

@@ -1,13 +1,17 @@
+---
 version: '3'
 
 output: group
 output-group-error-only: true
 run: once
+set: [e, pipefail]
 
 tasks:
   build:
     desc: "Run full build pipeline"
     deps:
+      - ensure_docker_compose_up
+      - lint_myself
       - mix_deps_get
       - mix_compile_test
       - mix_ecto_clean_test
@@ -15,6 +19,18 @@ tasks:
       - mix_format_test
       - mix_credo_test
       - e2e_test
+
+  ensure_docker_compose_up:
+    desc: "Ensure docker compose is running"
+    cmds:
+      - scripts/ensure_docker_compose_up.sh
+    deps: []
+
+  lint_myself:
+    desc: "check this file is formatted properly"
+    cmds:
+      - yamllint Taskfile.yml
+    deps: []
 
   mix_deps_get:
     desc: "Get dependencies"
@@ -36,7 +52,7 @@ tasks:
       MIX_ENV: test
     cmds:
       - mix ecto.clean
-    deps: [mix_compile_test]
+    deps: [ensure_docker_compose_up, mix_compile_test]
 
   mix_format_test:
     desc: "Check code formatting"
@@ -59,8 +75,6 @@ tasks:
       MIX_ENV: test
     cmds:
       - mix credo --strict
-
-
     deps: [mix_test]
 
   e2e_test:
@@ -68,4 +82,3 @@ tasks:
     cmds:
       - scripts/e2e_test.sh
     deps: [mix_test]
-
