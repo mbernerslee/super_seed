@@ -2,8 +2,17 @@ defmodule SuperSeed do
   require Logger
   alias SuperSeed.{Init, InserterModulesValidator, Server}
 
+  # TODO test this
+  def run do
+    Init.run() |> do_run()
+  end
+
   def run(name) do
-    with {:ok, %{repo: repo, inserters: inserters}} <- Init.run(name),
+    name |> Init.run() |> do_run()
+  end
+
+  defp do_run(init_result) do
+    with {:ok, %{repo: repo, inserters: inserters}} <- init_result,
          :ok <- InserterModulesValidator.validate(inserters) do
       Server.run(repo, inserters)
 
@@ -13,16 +22,22 @@ defmodule SuperSeed do
     else
       # TODO test & action these errors properly
       {:error, {:init, :inserter_modules_not_found}} ->
-        nil
+        {:error, {:init, :inserter_modules_not_found}}
 
       {:error, {:init, :config_in_wrong_format}} ->
-        nil
+        {:error, {:init, :config_in_wrong_format}}
 
       {:error, {:init, :missing_config}} ->
-        nil
+        {:error, {:init, :missing_config}}
+
+      {:error, {:init, :inserter_group_not_found}} ->
+        {:error, {:init, :inserter_group_not_found}}
+
+      {:error, {:init, :default_inserter_group_not_found}} ->
+        {:error, {:init, :default_inserter_group_not_found}}
 
       {:error, {:inserter_module_validation, _module, :malformed}} ->
-        nil
+        {:error, {:inserter_module_validation, _module, :malformed}}
     end
   end
 end

@@ -1,34 +1,15 @@
 defmodule SuperSeedTest do
-  @moduledoc """
-  Async false because we're changing application env stuff, which would effect other tests if run in parallel.
-  Testing the real super_seed config as defined in config/test.exs, so this is a high level e2e-ish test.
-  """
-
+  # @moduledoc "Aync false because DB opertaions happening in many processes"
   use SuperSeed.Support.DataCase, async: false
+  use Mimic
   import Ecto.Query
 
   alias SuperSeed.Repo
-
-  setup_all do
-    original = Application.get_env(:super_seed, :side_effects_wrapper_module)
-
-    Application.put_env(
-      :super_seed,
-      :side_effects_wrapper_module,
-      SuperSeed.SideEffectsWrapper.Real
-    )
-
-    on_exit(fn ->
-      Application.put_env(
-        :super_seed,
-        :side_effects_wrapper_module,
-        original
-      )
-    end)
-  end
+  alias SuperSeed.Support.Mocks
 
   describe "run/1" do
     test "given an inserter atom, run the inserter" do
+      Mocks.use_real_config()
       assert :ok == SuperSeed.run(:farms)
 
       # all strings in assertions below are from test inserters in test/support/inserters/farming/*

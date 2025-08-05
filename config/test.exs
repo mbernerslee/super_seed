@@ -12,12 +12,19 @@ config :super_seed, SuperSeed.Repo,
   pool_size: 10
 
 # Disable debug logging in tests
-config :logger, level: :warning
+config :logger, level: :debug
 
 config :super_seed,
+  default_inserter_group: :farms,
+  # TODO rename this to inserter_groups ?
   inserters: %{
     farms: %{
       namespace: SuperSeed.Support.Inserters.Farming,
+      repo: SuperSeed.Repo,
+      app: :super_seed
+    },
+    simple_example: %{
+      namespace: SuperSeed.Support.Inserters.SimpleExample,
       repo: SuperSeed.Repo,
       app: :super_seed
     }

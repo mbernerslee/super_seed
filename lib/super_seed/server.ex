@@ -6,14 +6,17 @@ defmodule SuperSeed.Server do
 
   def run(repo, inserters) do
     {:ok, _server_pid} =
-      GenServer.start_link(__MODULE__, %{repo: repo, inserters: inserters, caller_pid: self()})
+      GenServer.start_link(__MODULE__, %{repo: repo, inserters: inserters, caller_pid: self()}, name: __MODULE__)
   end
 
+  #TODO handle worker list being empty. it runs forever... CONTINUE HERE!!
   def init(%{repo: repo, inserters: inserters, caller_pid: caller_pid}) do
+    Logger.debug("#{__MODULE__} init")
     deps = build_dependencies(inserters)
 
     workers =
       Map.new(inserters, fn inserter ->
+        Logger.debug("#{__MODULE__} - #{inserter} starting worker")
         {:ok, worker_pid} = InserterWorker.start_link(inserter, repo, self())
         {inserter, %{status: :pending, pid: worker_pid}}
       end)
@@ -26,6 +29,8 @@ defmodule SuperSeed.Server do
   end
 
   def handle_cast({:worker_finished, inserter, {:ok, result}}, state) do
+    Logger.debug("#{__MODULE__} - #{inserter} worker finished")
+
     state =
       state
       |> put_in([:workers, inserter, :status], :finished)
@@ -47,6 +52,7 @@ defmodule SuperSeed.Server do
     deps
     |> WhichInsertersCanRun.determine(workers)
     |> Enum.reduce(state, fn inserter, state ->
+      Logger.debug("#{__MODULE__} - #{inserter} worker can start")
       worker = state[:workers][inserter]
       worker = Map.replace!(worker, :status, :running)
 

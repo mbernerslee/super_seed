@@ -6,14 +6,17 @@ defmodule SuperSeed.InitTest do
 
   describe "run/1" do
     test "given an inserter name that exists in config, we load the modules under its namespace" do
-      Mimic.expect(SideEffectsWrapper, :application_get_env, 1, fn :super_seed, :inserters ->
-        %{
-          example_name: %{
-            namespace: ExampleNamespace,
-            repo: ExampleNamespace.Repo,
-            app: :example_app
-          }
-        }
+      Mimic.expect(SideEffectsWrapper, :application_get_all_env, 1, fn :super_seed ->
+        [
+          {:inserters,
+           %{
+             example_name: %{
+               namespace: ExampleNamespace,
+               repo: ExampleNamespace.Repo,
+               app: :example_app
+             }
+           }}
+        ]
       end)
 
       Mimic.expect(SideEffectsWrapper, :application_get_key, 1, fn :example_app, :modules ->
@@ -29,13 +32,12 @@ defmodule SuperSeed.InitTest do
               %{
                 inserters: [ExampleNamespace.FakeModule, ExampleNamespace.OtherFakeModule],
                 repo: ExampleNamespace.Repo
-              }} ==
-               Init.run(:example_name)
+              }} == Init.run(:example_name)
     end
 
     @tag :capture_log
     test "when there's no config under the given name, return error" do
-      Mimic.expect(SideEffectsWrapper, :application_get_env, 1, fn :super_seed, :inserters ->
+      Mimic.expect(SideEffectsWrapper, :application_get_all_env, 1, fn :super_seed ->
         nil
       end)
 
@@ -46,7 +48,7 @@ defmodule SuperSeed.InitTest do
 
     @tag :capture_log
     test "when the config doesn't have the expected structure, return error" do
-      Mimic.expect(SideEffectsWrapper, :application_get_env, 1, fn :super_seed, :inserters ->
+      Mimic.expect(SideEffectsWrapper, :application_get_all_env, 1, fn :super_seed ->
         "wrong format"
       end)
 
@@ -57,14 +59,17 @@ defmodule SuperSeed.InitTest do
 
     @tag :capture_log
     test "when reading modules fails, return error" do
-      Mimic.expect(SideEffectsWrapper, :application_get_env, 1, fn :super_seed, :inserters ->
-        %{
-          example_name: %{
-            namespace: ExampleNamespace,
-            repo: ExampleNamespace.Repo,
-            app: :example_app
-          }
-        }
+      Mimic.expect(SideEffectsWrapper, :application_get_all_env, 1, fn :super_seed ->
+        [
+          {:inserters,
+           %{
+             example_name: %{
+               namespace: ExampleNamespace,
+               repo: ExampleNamespace.Repo,
+               app: :example_app
+             }
+           }}
+        ]
       end)
 
       Mimic.expect(SideEffectsWrapper, :application_get_key, 1, fn :example_app, :modules ->
