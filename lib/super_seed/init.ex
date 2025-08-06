@@ -7,24 +7,22 @@ defmodule SuperSeed.Init do
   require Logger
   alias SuperSeed.SideEffectsWrapper
 
-  @defaut_key :arbitrary_hopefully_unique_key_name
-
   def run do
-    @default_key
-    |> fetch_config()
-    |> do_run_with_config()
-    |> IO.inspect()
+    fetch_default_config() |> get_inserters_and_repo()
   end
 
   def run(inserter_group) do
-    inserter_group |> fetch_config() |> do_run_with_config()
+    inserter_group
+    |> fetch_config()
+    |> get_inserters_and_repo()
   end
 
-  defp do_run_with_config(config) do
+  defp get_inserters_and_repo(config) do
     with {:ok, %{namespace: namespace, repo: repo, app: app}} <- config,
          {:ok, modules} <- get_app_modules(app, namespace) do
       inserters = filter_inserter_modules_by_namespace(modules, namespace)
-      {:ok, %{inserters: inserters, repo: repo}}
+
+      {:ok, %{inserters: inserters, repo: repo, app: app}}
     end
   end
 
@@ -46,35 +44,19 @@ defmodule SuperSeed.Init do
     |> SideEffectsWrapper.application_get_all_env()
     |> parse_config()
     |> fetch_inserter_group(inserter_group)
-
-    # |> case do
-    #  list when is_list(list) ->
-    #    {:ok, Map.new(list)}
-
-    #  nil ->
-    #    {:error, {:init, :missing_config}}
-
-    #  _ ->
-    #    IO.inspect("HERE!")
-    #    {:error, {:init, :config_in_wrong_format}}
-    # end
-    # |> case do
-    #  {:ok, %{inserters: %{^inserter_group => %{namespace: namespace, repo: repo, app: app}}}} ->
-    #    {:ok, %{namespace: to_string(namespace), repo: repo, app: app}}
-
-    #  {:ok, _} ->
-    #    # TODO test this
-    #    {:error, {:init, :inserter_group_not_found}}
-
-    #  error ->
-    #    error
-    # end
   end
 
-  defp fetch_inserter_group({:ok, config}, @default_key) do
+  defp fetch_default_config do
+    :super_seed
+    |> SideEffectsWrapper.application_get_all_env()
+    |> parse_config()
+    |> fetch_default_inserter_group()
+  end
+
+  defp fetch_default_inserter_group({:ok, config}) do
     default_inserter_group = config[:default_inserter_group]
 
-    case config[:inserters][default_inserter_group] do
+    case config[:inserter_groups][default_inserter_group] do
       %{} ->
         fetch_inserter_group({:ok, config}, default_inserter_group)
 
@@ -83,13 +65,16 @@ defmodule SuperSeed.Init do
     end
   end
 
+  defp fetch_default_inserter_group(error) do
+    error
+  end
+
   defp fetch_inserter_group({:ok, config}, inserter_group) do
     case config do
-      %{inserters: %{^inserter_group => %{namespace: namespace, repo: repo, app: app}}} ->
+      %{inserter_groups: %{^inserter_group => %{namespace: namespace, repo: repo, app: app}}} ->
         {:ok, %{namespace: to_string(namespace), repo: repo, app: app}}
 
       _ ->
-        # TODO test this
         {:error, {:init, :inserter_group_not_found}}
     end
   end

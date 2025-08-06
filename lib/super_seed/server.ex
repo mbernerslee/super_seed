@@ -4,19 +4,29 @@ defmodule SuperSeed.Server do
   alias SuperSeed.InserterWorker
   alias SuperSeed.WhichInsertersCanRun
 
+  # TODO move functional logic out of here & test it separately?
+  # TODO work out what level of stuff to test at this level vs the functionally pure part
+  # TODO do a sweep of test coverage
+  # TODO add credo rules. audit them & maybe make a separate repo containing the preferred set?
+  # TODO ensure it works in dev / prod?
+  # TODO update README.md
+  # TODO add more mix tasks e.g. inserter generation
+  # TODO add fuller inserter validation e.g. circular dependencies etc etc
   def run(repo, inserters) do
-    {:ok, _server_pid} =
-      GenServer.start_link(__MODULE__, %{repo: repo, inserters: inserters, caller_pid: self()}, name: __MODULE__)
+    GenServer.start_link(__MODULE__, %{repo: repo, inserters: inserters, caller_pid: self()}, name: __MODULE__)
   end
 
-  #TODO handle worker list being empty. it runs forever... CONTINUE HERE!!
+  def init(%{inserters: [], caller_pid: caller_pid}) do
+    send(caller_pid, :server_done)
+    :ignore
+  end
+
   def init(%{repo: repo, inserters: inserters, caller_pid: caller_pid}) do
-    Logger.debug("#{__MODULE__} init")
+    Logger.info("#{__MODULE__} - starting")
     deps = build_dependencies(inserters)
 
     workers =
       Map.new(inserters, fn inserter ->
-        Logger.debug("#{__MODULE__} - #{inserter} starting worker")
         {:ok, worker_pid} = InserterWorker.start_link(inserter, repo, self())
         {inserter, %{status: :pending, pid: worker_pid}}
       end)
@@ -36,13 +46,47 @@ defmodule SuperSeed.Server do
       |> put_in([:workers, inserter, :status], :finished)
       |> put_in([:results, inserter], result)
 
-    # TODO BUG was here!!! never fininshed because only checking status BEFORE we update dthe last one. write a test to catch this
-    if Enum.all?(state.workers, fn {_, %{status: status}} -> status == :finished end) do
-      Logger.debug("Server - DONE!")
-      send(state.caller_pid, :server_done)
-      {:stop, :normal, state}
-    else
-      {:noreply, start_workers_which_can_run(state)}
+    continue_or_exit(state)
+  end
+
+  def handle_cast({:worker_finished, inserter, {:error, error}}, state) do
+    Logger.error("#{__MODULE__} - #{inserter} error #{inspect({:error, error})}")
+
+    state =
+      state
+      |> put_in([:workers, inserter, :status], :error)
+      |> put_in([:results, inserter], {:error, error})
+
+    workers =
+      Map.new(state.workers, fn
+        {inserter, %{pid: pid, status: :pending}} ->
+          Logger.debug("#{__MODULE__} - #{inserter} halting")
+          :ok = GenServer.stop(pid, :normal)
+          {inserter, %{pid: pid, status: :halted}}
+
+        {inserter, worker} ->
+          {inserter, worker}
+      end)
+
+    state = %{state | workers: workers}
+
+    continue_or_exit(state)
+  end
+
+  defp continue_or_exit(state) do
+    case worker_status(state) do
+      {:finished, :ok} ->
+        Logger.info("#{__MODULE__} - finished ok!")
+        send(state.caller_pid, :server_done)
+        {:stop, :normal, state}
+
+      {:finished, :error} ->
+        Logger.error("#{__MODULE__} - finished in error")
+        send(state.caller_pid, :server_error)
+        {:stop, :normal, state}
+
+      :running ->
+        {:noreply, start_workers_which_can_run(state)}
     end
   end
 
@@ -52,13 +96,22 @@ defmodule SuperSeed.Server do
     deps
     |> WhichInsertersCanRun.determine(workers)
     |> Enum.reduce(state, fn inserter, state ->
-      Logger.debug("#{__MODULE__} - #{inserter} worker can start")
       worker = state[:workers][inserter]
       worker = Map.replace!(worker, :status, :running)
 
       GenServer.cast(worker.pid, {:run_requested, results})
 
       put_in(state, [:workers, inserter], worker)
+    end)
+  end
+
+  defp worker_status(state) do
+    Enum.reduce_while(state.workers, {:finished, :ok}, fn
+      {_, %{status: :pending}}, _ -> {:halt, :running}
+      {_, %{status: :running}}, _ -> {:halt, :running}
+      {_, %{status: :halted}}, _ -> {:cont, {:finished, :error}}
+      {_, %{status: :error}}, _ -> {:cont, {:finished, :error}}
+      {_, %{status: :finished}}, acc -> {:cont, acc}
     end)
   end
 

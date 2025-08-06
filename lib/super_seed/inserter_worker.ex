@@ -7,19 +7,30 @@ defmodule SuperSeed.InserterWorker do
   end
 
   def init({inserter, repo, server_pid}) do
-    Logger.debug("#{inspect(inserter)} initialising...")
     {:ok, %{status: :pending, server_pid: server_pid, inserter: inserter, repo: repo}}
   end
 
-  def handle_cast({:run_requested, results}, state) do
+  def handle_cast({:run_requested, results}, %{status: :pending} = state) do
     {:noreply, %{state | status: :running}, {:continue, {:run, results}}}
+  end
+
+  def handle_cast({:run_requested, _results}, state) do
+    {:noreply, state}
   end
 
   def handle_continue({:run, results}, state) do
     Logger.debug("#{inspect(state.inserter)} running...")
     %{repo: repo, inserter: inserter, server_pid: server_pid} = state
 
-    result = repo.transaction(fn -> inserter.insert(results) end)
+    # TODO test errors being caught & handled properly
+    result =
+      try do
+        repo.transaction(fn -> inserter.insert(results) end)
+      rescue
+        error ->
+          Logger.debug("#{inspect(state.inserter)} error: #{inspect(error)}")
+          {:error, error}
+      end
 
     Logger.debug("#{inspect(state.inserter)} finished!")
 

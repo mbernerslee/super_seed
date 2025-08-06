@@ -9,11 +9,12 @@ source "$my_dir/pretty_wrapper_functions.sh"
 # Start the application and run a command
 export MIX_ENV=test
 export PGDATABASE=super_seed_test
+export SUPER_SEED_USE_REAL_SIDE_EFFECTS_WRAPPER_MODULE=true
 
 # expects migrations to be up to date prior to running
 
 mix ecto.trunc
-run_and_log "mix run -e \"Application.put_env(:super_seed, :side_effects_wrapper_module, SuperSeed.SideEffectsWrapper.Real); :ok = SuperSeed.run(:farms)\""
+run_and_log "mix super_seed"
 
 set +e
 

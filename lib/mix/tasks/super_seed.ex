@@ -14,7 +14,10 @@ defmodule Mix.Tasks.SuperSeed do
     SuperSeed.run()
   end
 
+  # test changing strings to atoms!
   def run([inserter_group]) do
-    SuperSeed.run(inserter_group)
+    inserter_group
+    |> String.to_atom()
+    |> SuperSeed.run()
   end
 end

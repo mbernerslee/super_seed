@@ -1,5 +1,4 @@
 defmodule SuperSeed.Support.Mocks do
-  # TODO use this module or lose it
   alias SuperSeed.SideEffectsWrapper
 
   def use_real_config do

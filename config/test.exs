@@ -12,12 +12,12 @@ config :super_seed, SuperSeed.Repo,
   pool_size: 10
 
 # Disable debug logging in tests
-config :logger, level: :debug
+# config :logger, level: :debug
+config :logger, level: :warning
 
 config :super_seed,
   default_inserter_group: :farms,
-  # TODO rename this to inserter_groups ?
-  inserters: %{
+  inserter_groups: %{
     farms: %{
       namespace: SuperSeed.Support.Inserters.Farming,
       repo: SuperSeed.Repo,
@@ -30,4 +30,7 @@ config :super_seed,
     }
   }
 
-config :super_seed, side_effects_wrapper_module: SuperSeed.SideEffectsWrapper.Fake
+case System.get_env("SUPER_SEED_USE_REAL_SIDE_EFFECTS_WRAPPER_MODULE", "false") do
+  "false" -> config :super_seed, side_effects_wrapper_module: SuperSeed.SideEffectsWrapper.Fake
+  "true" -> config :super_seed, side_effects_wrapper_module: SuperSeed.SideEffectsWrapper.Real
+end
