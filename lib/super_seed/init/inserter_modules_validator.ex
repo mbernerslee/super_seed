@@ -1,4 +1,4 @@
-defmodule SuperSeed.InserterModulesValidator do
+defmodule SuperSeed.Init.InserterModulesValidator do
   @required_functions MapSet.new(depends_on: 0, insert: 1, table: 0)
 
   def validate(modules) do

@@ -5,6 +5,8 @@ defmodule SuperSeed.Init do
   logs an error and halts the system if anything goes wrong
   """
   require Logger
+  alias SuperSeed.Init.InserterModulesValidator
+  alias SuperSeed.Init.ModuleNamespace
   alias SuperSeed.SideEffectsWrapper
 
   def run do
@@ -19,17 +21,12 @@ defmodule SuperSeed.Init do
 
   defp get_inserters_and_repo(config) do
     with {:ok, %{namespace: namespace, repo: repo, app: app}} <- config,
-         {:ok, modules} <- get_app_modules(app, namespace) do
-      inserters = filter_inserter_modules_by_namespace(modules, namespace)
-
-      {:ok, %{inserters: inserters, repo: repo, app: app}}
+         {:ok, modules} <- get_app_modules(app, namespace),
+         :ok <- ensure_app_started(app),
+         inserters <- ModuleNamespace.filter(modules, namespace),
+         :ok <- InserterModulesValidator.validate(inserters) do
+      {:ok, %{inserters: inserters, repo: repo}}
     end
-  end
-
-  defp filter_inserter_modules_by_namespace(modules, namespace) do
-    Enum.filter(modules, fn module ->
-      String.starts_with?(to_string(module), "#{namespace}.")
-    end)
   end
 
   defp get_app_modules(app, _namespace) do
@@ -93,6 +90,14 @@ defmodule SuperSeed.Init do
 
       _ ->
         {:error, {:init, :config_in_wrong_format}}
+    end
+  end
+
+  defp ensure_app_started(app) do
+    case SideEffectsWrapper.application_ensure_all_started(app) do
+      {:ok, _} -> :ok
+      # TODO change to :init error msg
+      {:error, _} -> {:error, {:init, :app_not_started, app}}
     end
   end
 end

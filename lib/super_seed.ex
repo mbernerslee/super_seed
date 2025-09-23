@@ -1,34 +1,34 @@
 defmodule SuperSeed do
   require Logger
-  alias SuperSeed.{Init, InserterModulesValidator, Server, SideEffectsWrapper}
+  alias SuperSeed.{Init, Server}
 
   def run do
-    Init.run() |> validate_and_run()
+    Init.run() |> run_server()
   end
 
   def run(name) do
-    name |> Init.run() |> validate_and_run()
+    name |> Init.run() |> run_server()
   end
 
-  defp validate_and_run(init_result) do
-    with {:ok, %{repo: repo, inserters: inserters, app: app}} <- init_result,
-         :ok <- ensure_app_started(app),
-         :ok <- InserterModulesValidator.validate(inserters) do
-      Server.run(repo, inserters)
+  defp run_server({:ok, %{repo: repo, inserters: inserters}}) do
+    Server.run(repo, inserters)
 
-      receive do
-        :server_done ->
-          :ok
+    receive do
+      :server_done ->
+        :ok
 
-        :server_error ->
-          Logger.error("""
-            An inserter errored, so insertion was halted part way through, leaving the DB in an unknwon partially inserted state.
-            I suggest you fix the error, reset the DB and try again
-          """)
+      :server_error ->
+        Logger.error("""
+          An inserter errored, so insertion was halted part way through, leaving the DB in an unknwon partially inserted state.
+          I suggest you fix the error, reset the DB and try again
+        """)
 
-          {:error, :inserter}
-      end
-    else
+        {:error, :inserter}
+    end
+  end
+
+  defp run_server(error) do
+    case error do
       {:error, {:init, :inserter_modules_not_found}} ->
         Logger.error("""
         I could not find any modules for the `app` you specified in config under `:super_seed :inserters <your inserter group name>`
@@ -138,19 +138,20 @@ defmodule SuperSeed do
 
         {:error, {:inserter_module_validation, module, :malformed}}
 
-      {:error, {:app_not_started, app}} ->
+      {:error, {:init, :app_not_started, app}} ->
         Logger.error("""
         The app #{inspect(app)} as defined in config has not been started, so I have failed to run.
         """)
 
         {:error, :app_not_started}
-    end
-  end
 
-  defp ensure_app_started(app) do
-    case SideEffectsWrapper.application_ensure_all_started(app) do
-      {:ok, _} -> :ok
-      {:error, _} -> {:error, {:app_not_started, app}}
+      error ->
+        Logger.error("""
+          An unexpected error has been returned during initialisation
+          #{inspect(error)}
+        """)
+
+        error
     end
   end
 end

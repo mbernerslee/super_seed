@@ -1,6 +1,6 @@
-defmodule SuperSeed.InserterModulesValidatorTest do
+defmodule SuperSeed.Init.InserterModulesValidatorTest do
   use ExUnit.Case, async: true
-  alias SuperSeed.InserterModulesValidator
+  alias SuperSeed.Init.InserterModulesValidator
 
   alias SuperSeed.Support.Inserters.ValidationExamples.{
     MinimumValid,

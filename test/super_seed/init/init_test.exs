@@ -12,7 +12,7 @@ defmodule SuperSeed.InitTest do
           {:inserter_groups,
            %{
              example_name: %{
-               namespace: ExampleNamespace,
+               namespace: SuperSeed.Support.Inserters.ValidationExamples,
                repo: ExampleNamespace.Repo,
                app: :example_app
              }
@@ -23,17 +23,19 @@ defmodule SuperSeed.InitTest do
       Mimic.expect(SideEffectsWrapper, :application_get_key, 1, fn :example_app, :modules ->
         {:ok,
          [
-           ExampleNamespace.FakeModule,
-           OtherNamespace.IgnoredModule,
-           ExampleNamespace.OtherFakeModule
+           SuperSeed.Support.Inserters.ValidationExamples.MinimumValid,
+           OtherNamespace.IgnoredModule
          ]}
+      end)
+
+      Mimic.expect(SideEffectsWrapper, :application_ensure_all_started, 1, fn :example_app ->
+        {:ok, []}
       end)
 
       assert {:ok,
               %{
-                inserters: [ExampleNamespace.FakeModule, ExampleNamespace.OtherFakeModule],
-                repo: ExampleNamespace.Repo,
-                app: :example_app
+                inserters: [SuperSeed.Support.Inserters.ValidationExamples.MinimumValid],
+                repo: ExampleNamespace.Repo
               }} == Init.run()
     end
 
@@ -43,7 +45,7 @@ defmodule SuperSeed.InitTest do
           {:inserter_groups,
            %{
              example_name: %{
-               namespace: ExampleNamespace,
+               namespace: SuperSeed.Support.Inserters.ValidationExamples,
                repo: ExampleNamespace.Repo,
                app: :example_app
              }
@@ -54,17 +56,19 @@ defmodule SuperSeed.InitTest do
       Mimic.expect(SideEffectsWrapper, :application_get_key, 1, fn :example_app, :modules ->
         {:ok,
          [
-           ExampleNamespace.FakeModule,
-           OtherNamespace.IgnoredModule,
-           ExampleNamespace.OtherFakeModule
+           SuperSeed.Support.Inserters.ValidationExamples.MinimumValid,
+           OtherNamespace.IgnoredModule
          ]}
+      end)
+
+      Mimic.expect(SideEffectsWrapper, :application_ensure_all_started, 1, fn :example_app ->
+        {:ok, []}
       end)
 
       assert {:ok,
               %{
-                inserters: [ExampleNamespace.FakeModule, ExampleNamespace.OtherFakeModule],
-                repo: ExampleNamespace.Repo,
-                app: :example_app
+                inserters: [SuperSeed.Support.Inserters.ValidationExamples.MinimumValid],
+                repo: ExampleNamespace.Repo
               }} == Init.run(:example_name)
     end
 
@@ -75,6 +79,7 @@ defmodule SuperSeed.InitTest do
       end)
 
       Mimic.reject(&SideEffectsWrapper.application_get_key/2)
+      Mimic.reject(&SideEffectsWrapper.application_ensure_all_started/1)
 
       assert {:error, {:init, :missing_config}} = Init.run(:example_name)
     end
@@ -86,6 +91,7 @@ defmodule SuperSeed.InitTest do
       end)
 
       Mimic.reject(&SideEffectsWrapper.application_get_key/2)
+      Mimic.reject(&SideEffectsWrapper.application_ensure_all_started/1)
 
       assert {:error, {:init, :config_in_wrong_format}} = Init.run(:example_name)
     end
@@ -109,6 +115,8 @@ defmodule SuperSeed.InitTest do
         :undefined
       end)
 
+      Mimic.reject(&SideEffectsWrapper.application_ensure_all_started/1)
+
       assert {:error, {:init, :inserter_modules_not_found}} = Init.run(:example_name)
     end
 
@@ -127,17 +135,50 @@ defmodule SuperSeed.InitTest do
         ]
       end)
 
+      Mimic.reject(&SideEffectsWrapper.application_get_key/2)
+      Mimic.reject(&SideEffectsWrapper.application_ensure_all_started/1)
+
       assert {:error, {:init, :inserter_group_not_found}} = Init.run(:missing_group)
+    end
+
+    test "errors when the app is not started" do
+      Mimic.expect(SideEffectsWrapper, :application_get_all_env, 1, fn :super_seed ->
+        [
+          {:default_inserter_group, :example_name},
+          {:inserter_groups,
+           %{
+             example_name: %{
+               namespace: SuperSeed.Support.Inserters.ValidationExamples,
+               repo: ExampleNamespace.Repo,
+               app: :example_app
+             }
+           }}
+        ]
+      end)
+
+      Mimic.expect(SideEffectsWrapper, :application_get_key, 1, fn :example_app, :modules ->
+        {:ok,
+         [
+           SuperSeed.Support.Inserters.ValidationExamples.MinimumValid,
+           OtherNamespace.IgnoredModule
+         ]}
+      end)
+
+      Mimic.expect(SideEffectsWrapper, :application_ensure_all_started, 1, fn :example_app ->
+        {:error, {:example_app, :fail}}
+      end)
+
+      assert {:error, {:init, :app_not_started, :example_app}} == Init.run()
     end
 
     @tag :capture_log
     test "when default inserter group is not found in config, return error" do
       Mimic.expect(SideEffectsWrapper, :application_get_all_env, 1, fn :super_seed ->
         [
-          {:default_inserter_group, :missing_default_group},
+          {:default_inserter_group, :missing_group},
           {:inserter_groups,
            %{
-             available_group: %{
+             example_name: %{
                namespace: ExampleNamespace,
                repo: ExampleNamespace.Repo,
                app: :example_app
@@ -146,24 +187,39 @@ defmodule SuperSeed.InitTest do
         ]
       end)
 
+      Mimic.reject(&SideEffectsWrapper.application_get_key/2)
+      Mimic.reject(&SideEffectsWrapper.application_ensure_all_started/1)
+
       assert {:error, {:init, :default_inserter_group_not_found}} = Init.run()
     end
 
-    test "module filtering works with module names prefixed with Elixir" do
+    @tag :capture_log
+    test "when inserter module validation fails, return error" do
       Mimic.expect(SideEffectsWrapper, :application_get_all_env, 1, fn :super_seed ->
-        Application.get_all_env(:super_seed)
+        [
+          {:inserter_groups,
+           %{
+             example_name: %{
+               namespace: SuperSeed.Support.Inserters.ValidationExamples,
+               repo: ExampleNamespace.Repo,
+               app: :example_app
+             }
+           }}
+        ]
       end)
 
-      Mimic.expect(SideEffectsWrapper, :application_get_key, 1, fn :super_seed, :modules ->
-        {:ok, modules} = :application.get_key(:super_seed, :modules)
-        {:ok, [Elixir.SuperSeed.Support.Inserters.Farming.TestModule | modules]}
+      invalid_module = SuperSeed.Support.Inserters.ValidationExamples.MissingInsert
+
+      Mimic.expect(SideEffectsWrapper, :application_get_key, 1, fn :example_app, :modules ->
+        {:ok, [invalid_module]}
       end)
 
-      assert {:ok, %{inserters: inserters, repo: SuperSeed.Repo}} = Init.run(:farms)
+      Mimic.expect(SideEffectsWrapper, :application_ensure_all_started, 1, fn :example_app ->
+        {:ok, []}
+      end)
 
-      assert Enum.member?(inserters, Elixir.SuperSeed.Support.Inserters.Farming.TestModule)
-      assert Enum.member?(inserters, SuperSeed.Support.Inserters.Farming.TestModule)
-      assert Enum.member?(inserters, SuperSeed.Support.Inserters.Farming.Farms.SunriseValley)
+      assert {:error, {:inserter_module_validation, invalid_module, :malformed}} ==
+               Init.run(:example_name)
     end
   end
 end

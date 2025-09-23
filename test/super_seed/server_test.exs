@@ -32,7 +32,7 @@ defmodule SuperSeed.ServerTest do
       assert {:ok, _pid} = Server.run(SuperSeed.Repo, [SuperSeed.Support.Inserters.Farming.Farms.SunriseValley])
       assert_receive :server_done
 
-      assert Repo.one!(from f in "farms", select: f.name) == "Sunrise Valley"
+      assert Repo.one!(from(f in "farms", select: f.name)) == "Sunrise Valley"
     end
 
     test "with all ':farm' inserters, we perform all expected DB inserters" do
