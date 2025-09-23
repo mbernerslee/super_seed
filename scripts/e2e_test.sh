@@ -6,7 +6,6 @@ TOTAL_START_TIME=$(date +%s.%N)
 my_dir="$(dirname "$0")"
 source "$my_dir/pretty_wrapper_functions.sh"
 
-# Start the application and run a command
 export MIX_ENV=test
 export PGDATABASE=super_seed_test
 export SUPER_SEED_USE_REAL_SIDE_EFFECTS_WRAPPER_MODULE=true

@@ -9,5 +9,9 @@ defmodule SuperSeed.Support.Mocks do
     Mimic.expect(SideEffectsWrapper, :application_get_key, 1, fn :super_seed, :modules ->
       :application.get_key(:super_seed, :modules)
     end)
+
+    Mimic.expect(SideEffectsWrapper, :application_ensure_all_started, 1, fn :super_seed ->
+      Application.ensure_all_started(:super_seed)
+    end)
   end
 end

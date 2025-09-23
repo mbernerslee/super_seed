@@ -47,7 +47,7 @@ tasks:
     deps: [mix_deps_get]
 
   mix_ecto_clean_test:
-    desc: "Clean build artifacts"
+    desc: "reset the test DB"
     env:
       MIX_ENV: test
     cmds:

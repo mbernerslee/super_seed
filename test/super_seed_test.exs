@@ -152,5 +152,31 @@ defmodule SuperSeedTest do
 
       assert {:error, :inserter} == SuperSeed.run(:test_group)
     end
+
+    @tag :capture_log
+    test "when ensuring the app is started fails, return error" do
+      Mimic.expect(SideEffectsWrapper, :application_get_all_env, 1, fn :super_seed ->
+        [
+          {:inserter_groups,
+           %{
+             test_group: %{
+               namespace: SuperSeed.Support.Inserters.ValidationExamples,
+               repo: SuperSeed.Repo,
+               app: :super_seed
+             }
+           }}
+        ]
+      end)
+
+      Mimic.expect(SideEffectsWrapper, :application_get_key, 1, fn :super_seed, :modules ->
+        {:ok, [SuperSeed.Support.Inserters.ValidationExamples.MinimumValid]}
+      end)
+
+      Mimic.expect(SideEffectsWrapper, :application_ensure_all_started, 1, fn :super_seed ->
+        {:error, {:super_seed, :fail}}
+      end)
+
+      assert {:error, :app_not_started} == SuperSeed.run(:test_group)
+    end
   end
 end

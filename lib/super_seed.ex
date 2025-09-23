@@ -10,11 +10,9 @@ defmodule SuperSeed do
     name |> Init.run() |> validate_and_run()
   end
 
-  # TODO test that we call SideEffectsWrapper.application_ensure_all_started/1
-  # and deal with it not working...
   defp validate_and_run(init_result) do
     with {:ok, %{repo: repo, inserters: inserters, app: app}} <- init_result,
-         {:ok, _} <- SideEffectsWrapper.application_ensure_all_started(app),
+         :ok <- ensure_app_started(app),
          :ok <- InserterModulesValidator.validate(inserters) do
       Server.run(repo, inserters)
 
@@ -139,6 +137,20 @@ defmodule SuperSeed do
         """)
 
         {:error, {:inserter_module_validation, module, :malformed}}
+
+      {:error, {:app_not_started, app}} ->
+        Logger.error("""
+        The app #{inspect(app)} as defined in config has not been started, so I have failed to run.
+        """)
+
+        {:error, :app_not_started}
+    end
+  end
+
+  defp ensure_app_started(app) do
+    case SideEffectsWrapper.application_ensure_all_started(app) do
+      {:ok, _} -> :ok
+      {:error, _} -> {:error, {:app_not_started, app}}
     end
   end
 end

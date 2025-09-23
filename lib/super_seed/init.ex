@@ -1,6 +1,6 @@
 defmodule SuperSeed.Init do
   @moduledoc """
-  Reads config to get the inserter modules and Repo under the given name.
+  Reads config to get the inserter modules, OTP application and Repo under the given name.
 
   logs an error and halts the system if anything goes wrong
   """
