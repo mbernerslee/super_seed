@@ -96,7 +96,6 @@ defmodule SuperSeed.Init do
   defp ensure_app_started(app) do
     case SideEffectsWrapper.application_ensure_all_started(app) do
       {:ok, _} -> :ok
-      # TODO change to :init error msg
       {:error, _} -> {:error, {:init, :app_not_started, app}}
     end
   end

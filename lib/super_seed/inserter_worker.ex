@@ -22,7 +22,6 @@ defmodule SuperSeed.InserterWorker do
     Logger.debug("#{inspect(state.inserter)} running...")
     %{repo: repo, inserter: inserter, server_pid: server_pid} = state
 
-    # TODO test errors being caught & handled properly
     result =
       try do
         repo.transaction(fn -> inserter.insert(results) end)

@@ -4,7 +4,6 @@ defmodule SuperSeed.Server do
   alias SuperSeed.InserterWorker
   alias SuperSeed.WhichInsertersCanRun
 
-  # TODO move functional logic out of here & test it separately?
   # TODO work out what level of stuff to test at this level vs the functionally pure part
   # TODO do a sweep of test coverage
   # TODO add credo rules. audit them & maybe make a separate repo containing the preferred set?
@@ -105,6 +104,7 @@ defmodule SuperSeed.Server do
     end)
   end
 
+  # TODO extact and test this
   defp worker_status(state) do
     Enum.reduce_while(state.workers, {:finished, :ok}, fn
       {_, %{status: :pending}}, _ -> {:halt, :running}
@@ -115,6 +115,7 @@ defmodule SuperSeed.Server do
     end)
   end
 
+  # TODO extact and test this. keep keep the Enum.map here, but the other fnal logic out (so the tests not need to be given modules, just data)
   defp build_dependencies(inserters) do
     expended =
       Enum.map(inserters, fn inserter -> {inserter, inserter.table(), inserter.depends_on()} end)
