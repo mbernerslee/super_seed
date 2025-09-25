@@ -1,7 +1,9 @@
 defmodule SuperSeed.Server do
   require Logger
   use GenServer
+  alias SuperSeed.DependencyResolver
   alias SuperSeed.InserterWorker
+  alias SuperSeed.InserterWorkersStatus
   alias SuperSeed.WhichInsertersCanRun
 
   # TODO work out what level of stuff to test at this level vs the functionally pure part
@@ -22,7 +24,11 @@ defmodule SuperSeed.Server do
 
   def init(%{repo: repo, inserters: inserters, caller_pid: caller_pid}) do
     Logger.info("#{__MODULE__} - starting")
-    deps = build_dependencies(inserters)
+
+    expended_inserters =
+      Enum.map(inserters, fn inserter -> {inserter, inserter.table(), inserter.depends_on()} end)
+
+    deps = DependencyResolver.resolve(expended_inserters)
 
     workers =
       Map.new(inserters, fn inserter ->
@@ -73,7 +79,7 @@ defmodule SuperSeed.Server do
   end
 
   defp continue_or_exit(state) do
-    case worker_status(state) do
+    case InserterWorkersStatus.determine(state.workers) do
       {:finished, :ok} ->
         Logger.info("#{__MODULE__} - finished ok!")
         send(state.caller_pid, :server_done)
@@ -101,40 +107,6 @@ defmodule SuperSeed.Server do
       GenServer.cast(worker.pid, {:run_requested, results})
 
       put_in(state, [:workers, inserter], worker)
-    end)
-  end
-
-  # TODO extact and test this
-  defp worker_status(state) do
-    Enum.reduce_while(state.workers, {:finished, :ok}, fn
-      {_, %{status: :pending}}, _ -> {:halt, :running}
-      {_, %{status: :running}}, _ -> {:halt, :running}
-      {_, %{status: :halted}}, _ -> {:cont, {:finished, :error}}
-      {_, %{status: :error}}, _ -> {:cont, {:finished, :error}}
-      {_, %{status: :finished}}, acc -> {:cont, acc}
-    end)
-  end
-
-  # TODO extact and test this. keep keep the Enum.map here, but the other fnal logic out (so the tests not need to be given modules, just data)
-  defp build_dependencies(inserters) do
-    expended =
-      Enum.map(inserters, fn inserter -> {inserter, inserter.table(), inserter.depends_on()} end)
-
-    tables =
-      Enum.reduce(expended, %{}, fn {inserter, table, _depends_on}, acc ->
-        Map.update(acc, table, [inserter], &[inserter | &1])
-      end)
-
-    Map.new(expended, fn {inserter, _table, depends_on} ->
-      dependants =
-        depends_on
-        |> Enum.flat_map(fn
-          {:table, table} -> Map.fetch!(tables, table)
-          {:inserter, inserter} -> [inserter]
-        end)
-        |> MapSet.new()
-
-      {inserter, dependants}
     end)
   end
 end
