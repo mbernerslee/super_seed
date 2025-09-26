@@ -50,4 +50,23 @@ defmodule SuperSeed.Support.Assertions do
     assert [%{name: "Moolisa", farm_id: ^farm_id, animal_type_id: ^animal_type_id}] =
              Repo.all(from(f in "animals", select: [:name, :farm_id, :animal_type_id]))
   end
+
+  def retry_assertion_fn(assertion_fun, timeout_ms \\ 1_000) do
+    max_end_time = System.monotonic_time(:millisecond) + timeout_ms
+    do_retry_assertion_fn(assertion_fun, 1, max_end_time)
+  end
+
+  defp do_retry_assertion_fn(assertion_fun, count, max_end_time) do
+    try do
+      assertion_fun.()
+    rescue
+      e in ExUnit.AssertionError ->
+        if System.monotonic_time(:millisecond) > max_end_time do
+          reraise e, __STACKTRACE__
+        else
+          :timer.sleep(10)
+          do_retry_assertion_fn(assertion_fun, count + 1, max_end_time)
+        end
+    end
+  end
 end

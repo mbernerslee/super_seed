@@ -1,0 +1,15 @@
+  Missing test scenarios:
+
+  1. Dependency ordering verification - Current tests don't verify that dependencies actually run before their dependents. This is core
+   functionality.
+  2. Worker halting on error - When a worker fails, pending workers should be halted (status changes to :halted). This critical
+  error-handling behavior isn't tested.
+  3. State transitions and status management - Tests don't verify worker status transitions: pending -> running ->
+  finished/error/halted.
+  4. Results passing to dependent workers - No verification that results from completed workers are passed to their dependents via the
+  {:run_requested, results} cast.
+  5. Complex dependency chains with mixed success/failure - Current tests are either all-success or single-failure. Missing scenarios
+  like "A succeeds, B fails, C depends on A and should still run, D depends on B and should be halted".
+  6. Integration testing of orchestration logic - Current tests are high-level end-to-end. Missing focused tests on how Server
+  coordinates with WhichInsertersCanRun, InserterWorkersStatus, and DependencyResolver.
+

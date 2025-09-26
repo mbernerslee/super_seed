@@ -6,13 +6,10 @@ defmodule SuperSeed.Server do
   alias SuperSeed.InserterWorkersStatus
   alias SuperSeed.WhichInsertersCanRun
 
-  # TODO work out what level of stuff to test at this level vs the functionally pure part
   # TODO do a sweep of test coverage
-  # TODO add credo rules. audit them & maybe make a separate repo containing the preferred set?
   # TODO ensure it works in dev / prod?
   # TODO update README.md
   # TODO add more mix tasks e.g. inserter generation
-  # TODO add fuller inserter validation e.g. circular dependencies etc etc
   def run(repo, inserters) do
     GenServer.start_link(__MODULE__, %{repo: repo, inserters: inserters, caller_pid: self()}, name: __MODULE__)
   end
