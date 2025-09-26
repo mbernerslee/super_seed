@@ -8,7 +8,7 @@ defmodule SuperSeed.SideEffectsWrapper do
   def application_ensure_all_started(app), do: impl().application_ensure_all_started(app)
 
   defp impl do
-    Application.fetch_env!(:super_seed, :side_effects_wrapper_module)
+    Application.get_env(:super_seed, :side_effects_wrapper_module, SuperSeed.SideEffectsWrapper.Real)
   end
 
   defmodule Real do

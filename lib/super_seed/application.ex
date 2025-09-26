@@ -9,7 +9,7 @@ defmodule SuperSeed.Application do
   def start(_type, _args) do
     children = [
       # Start the Ecto repository
-      SuperSeed.Repo
+      # SuperSeed.Repo
       # Start other processes here if needed
     ]
 

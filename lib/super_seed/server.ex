@@ -6,10 +6,11 @@ defmodule SuperSeed.Server do
   alias SuperSeed.InserterWorkersStatus
   alias SuperSeed.WhichInsertersCanRun
 
+  # TODO add more mix tasks e.g. inserter generation
+  # TODO    - init (adds to config? creates
   # TODO do a sweep of test coverage
   # TODO ensure it works in dev / prod?
   # TODO update README.md
-  # TODO add more mix tasks e.g. inserter generation
   def run(repo, inserters) do
     GenServer.start_link(__MODULE__, %{repo: repo, inserters: inserters, caller_pid: self()}, name: __MODULE__)
   end
