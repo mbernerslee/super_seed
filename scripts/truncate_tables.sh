@@ -3,27 +3,13 @@
 my_dir="$(dirname "$0")"
 source "$my_dir/pretty_wrapper_functions.sh"
 
-export MIX_ENV=${MIX_ENV:-test}
-
-# infer the db name from MIX_ENV but only if PGDATABASE is not set
-case "$MIX_ENV" in
-  dev)
-    export PGDATABASE=super_seed_dev
-    ;;
-  test)
-    export PGDATABASE=super_seed_test
-    ;;
-  prod)
-    echo "I refuse to run in prod"
-    exit 1
-    ;;
-  *)
-    echo "Unknown environment: $MIX_ENV"
-    exit 1
-    ;;
-esac
-
-echo_info "using PGDATABASE=$PGDATABASE, inferred from MIX_ENV=$MIX_ENV"
+# Check if PGDATABASE environment variable is set
+if [ -z "$PGDATABASE" ]; then
+  echo_error "PGDATABASE environment variable is not set"
+  exit 1
+else
+ echo_info "using PGDATABASE=$PGDATABASE"
+fi
 
 TRUNCATE_CMD=$(psql -t -c "
   SELECT 'TRUNCATE TABLE ' || string_agg(tablename, ', ') || ';'

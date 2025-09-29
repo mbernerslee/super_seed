@@ -1,4 +1,4 @@
-defmodule SuperSeed.Application do
+defmodule ClientTestApp.Application do
   # See https://hexdocs.pm/elixir/Application.html
   # for more information on OTP Applications
   @moduledoc false
@@ -9,13 +9,13 @@ defmodule SuperSeed.Application do
   def start(_type, _args) do
     children = [
       # Start the Ecto repository
-      # SuperSeed.Repo
+      ClientTestApp.Repo
       # Start other processes here if needed
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
-    opts = [strategy: :one_for_one, name: SuperSeed.Supervisor]
+    opts = [strategy: :one_for_one, name: ClientTestApp.Supervisor]
     Supervisor.start_link(children, opts)
   end
 end

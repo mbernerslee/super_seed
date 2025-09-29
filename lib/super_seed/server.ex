@@ -16,6 +16,7 @@ defmodule SuperSeed.Server do
   end
 
   def init(%{inserters: [], caller_pid: caller_pid}) do
+    Logger.info("#{__MODULE__} - exiting on startup because no Inserters modules found")
     send(caller_pid, :server_done)
     :ignore
   end

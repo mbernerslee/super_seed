@@ -27,11 +27,17 @@ defmodule SuperSeed.InserterWorker do
         repo.transaction(fn -> inserter.insert(results) end)
       rescue
         error ->
-          Logger.debug("#{inspect(state.inserter)} error: #{inspect(error)}")
+          Logger.error("#{inspect(state.inserter)} error: #{inspect(error)}")
           {:error, error}
       end
 
-    Logger.debug("#{inspect(state.inserter)} finished!")
+    case result do
+      {:ok, _} ->
+        Logger.debug("#{inspect(state.inserter)} finished ok!")
+
+      _ ->
+        nil
+    end
 
     :ok = GenServer.cast(server_pid, {:worker_finished, inserter, result})
 

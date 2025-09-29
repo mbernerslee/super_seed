@@ -6,13 +6,15 @@ TOTAL_START_TIME=$(date +%s.%N)
 my_dir="$(dirname "$0")"
 source "$my_dir/pretty_wrapper_functions.sh"
 
-export MIX_ENV=test
-export PGDATABASE=super_seed_test
-export SUPER_SEED_USE_REAL_SIDE_EFFECTS_WRAPPER_MODULE=true
+cd "$my_dir/../client_test_app"
 
 # expects migrations to be up to date prior to running
 
-mix ecto.trunc
+export MIX_ENV=dev
+export PGDATABASE=client_test_app_dev
+
+./../scripts/truncate_tables.sh
+
 run_and_log "mix super_seed"
 
 set +e
@@ -35,7 +37,8 @@ run_and_log "assert \"SELECT name FROM farms;\" \"Sunrise Valley\""
 run_and_log "assert \"SELECT COUNT(*) FROM animals;\" \"4\""
 
 set -e
-mix ecto.trunc
+
+./../scripts/truncate_tables.sh
 
 TOTAL_END_TIME=$(date +%s.%N)
 TOTAL_DURATION=$(calculate_duration "$TOTAL_START_TIME" "$TOTAL_END_TIME")

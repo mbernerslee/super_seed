@@ -32,6 +32,7 @@ defmodule SuperSeed.InserterWorkerTest do
     end
   end
 
+  @tag capture_log: true
   test "workers that raise are handled gracefully" do
     assert {:ok, pid} = InserterWorker.start_link(RaisingInserter, Repo, self())
 

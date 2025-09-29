@@ -10,6 +10,9 @@ defmodule Mix.Tasks.SuperSeed do
 
   use Mix.Task
 
+  @shortdoc "inserts seed data"
+  @requirements ["app.config"]
+
   def run([]) do
     SuperSeed.run()
   end

@@ -16,7 +16,7 @@ defmodule SuperSeed.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      #mod: {SuperSeed.Application, []},
+      # mod: {SuperSeed.Application, []},
       extra_applications: [:logger]
     ]
   end
@@ -27,8 +27,8 @@ defmodule SuperSeed.MixProject do
 
   defp aliases do
     [
-      "ecto.clean": ["ecto.drop", "ecto.create", "ecto.migrate"],
-      "ecto.trunc": ["cmd ./scripts/truncate_tables.sh"]
+      # "ecto.clean": ["ecto.drop", "ecto.create", "ecto.migrate"],
+      # "ecto.trunc": ["cmd ./scripts/truncate_tables.sh"]
     ]
   end
 
