@@ -185,7 +185,7 @@ be found at <https://hexdocs.pm/super_seed>.
 All inserters run within a Repo.transaction/1
 
 ## Tips & suggestions
-Suggest pairing `mix super_seed` with a script which can delete existing data from the DB without dropping it, such that we can reseed the DB without dropping it DB and killing existing connections. This way we don't neccessarily have to restart our running app when we reseed the DB. Such a script could look like:
+Suggest pairing `mix super_seed` with a script which can delete existing data from the DB without dropping it, such that we can reseed the DB without dropping it DB and killing existing connections. This way we don't necessarily have to restart our running app when we reseed the DB. Such a script could look like:
 
 ```bash
 #!/usr/bin/env bash
@@ -223,10 +223,10 @@ Then you can have a custom mix alias to reseed the DB (but not run migrations, n
 
 Obviously you'll need safeguards to make sure you can't run such things in prod!
 
-## Tradeoffs & Failure
+## Trade-offs & Failure
 In the trade-off of "insertion speed" vs "DB consistency in case of failure", we prioritises speed.
 
 If an inserter fails, then the DB will be left in an unknown half-seeded state.
-It would be complicatex to rollback every inserter which ran to completion if one later down the road failed, which at the time of writing super_seed does not do.
+It would be complex to rollback every inserter which ran to completion if one later down the road failed, which at the time of writing super_seed does not do.
 
-This is considered a good choice in the trade-off since this is for seed data and should never be used on prod. In local dev or staging environemnts we should diagnose the bug that caused an inserter to fail and reset the DB and try again.
+This is considered a good choice in the trade-off since this is for seed data and should never be used on prod. In local dev or staging environments we should diagnose the bug that caused an inserter to fail and reset the DB and try again.

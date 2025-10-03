@@ -7,7 +7,9 @@ defmodule SuperSeed.Server do
   alias SuperSeed.WhichInsertersCanRun
 
   # TODO add more mix tasks e.g. inserter generation
-  # TODO    - init (adds to config? creates
+  # TODO    - super_seed.init (adds to config? creates
+  # TODO    - super_seed.gen.inserter (creates new inserter)
+  # TODO    - super_seed.tree (shows visual deps tree)
   # TODO do a sweep of test coverage
   # TODO ensure it works in dev / prod?
   # TODO update README.md

@@ -10,14 +10,14 @@ defmodule Mix.Tasks.SuperSeed do
 
   use Mix.Task
 
-  @shortdoc "inserts seed data"
+  @shortdoc "Inserts seed data"
   @requirements ["app.config"]
 
   def run([]) do
     SuperSeed.run()
   end
 
-  # test changing strings to atoms!
+  # TODO test changing strings to atoms!
   def run([inserter_group]) do
     inserter_group
     |> String.to_atom()
